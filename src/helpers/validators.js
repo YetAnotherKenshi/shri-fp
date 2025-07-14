@@ -1,4 +1,17 @@
-import { allPass, propEq, count, equals, gte } from "ramda";
+import {
+    allPass,
+    propEq,
+    count,
+    equals,
+    gte,
+    __,
+    pipe,
+    values,
+    any,
+    filter,
+    all,
+    complement,
+} from "ramda";
 /**
  * @file Домашка по FP ч. 1
  *
@@ -23,15 +36,12 @@ export const validateFieldN1 = allPass([
 ]);
 
 // 2. Как минимум две фигуры зеленые.
-export const validateFieldN2 = ({ star, square, triangle, circle }) =>
-    gte(count(equals("green"), [star, square, triangle, circle]), 2);
+export const validateFieldN2 = pipe(values, count(equals("green")), gte(__, 2));
 
 // 3. Количество красных фигур равно кол-ву синих.
-export const validateFieldN3 = ({ star, square, triangle, circle }) =>
-    equals(
-        count(equals("red"), [star, square, triangle, circle]),
-        count(equals("blue"), [star, square, triangle, circle])
-    );
+export const validateFieldN3 = pipe(values, (colors) =>
+    equals(count(equals("red"), colors), count(equals("blue"), colors))
+);
 
 // 4. Синий круг, красная звезда, оранжевый квадрат треугольник любого цвета
 export const validateFieldN4 = allPass([
@@ -41,36 +51,33 @@ export const validateFieldN4 = allPass([
 ]);
 
 // 5. Три фигуры одного любого цвета кроме белого (четыре фигуры одного цвета – это тоже true).
-export const validateFieldN5 = ({ star, square, triangle, circle }) => {
-    const colors = [star, square, triangle, circle].filter(
-        (color) => color !== "white"
-    );
-    return colors.some((color) => count(equals(color), colors) >= 3);
-};
+export const validateFieldN5 = pipe(
+    values,
+    filter(complement(equals("white"))),
+    (colors) => any((color) => count(equals(color), colors) >= 3, colors)
+);
 
 // 6. Ровно две зеленые фигуры (одна из зелёных – это треугольник), плюс одна красная. Четвёртая оставшаяся любого доступного цвета, но не нарушающая первые два условия
 export const validateFieldN6 = allPass([
     propEq("triangle", "green"),
-    (figures) => count(equals("green"), Object.values(figures)) === 2,
-    (figures) => count(equals("red"), Object.values(figures)) === 1,
+    pipe(values, count(equals("green")), equals(2)),
+    pipe(values, count(equals("red")), equals(1)),
 ]);
 
 // 7. Все фигуры оранжевые.
-export const validateFieldN7 = ({ star, square, triangle, circle }) =>
-    [star, square, triangle, circle].every(equals("orange"));
+export const validateFieldN7 = pipe(values, all(equals("orange")));
 
 // 8. Не красная и не белая звезда, остальные – любого цвета.
 export const validateFieldN8 = allPass([
-    (figures) => figures.star !== "red",
-    (figures) => figures.star !== "white",
+    complement(propEq("star", "red")),
+    complement(propEq("star", "white")),
 ]);
 
 // 9. Все фигуры зеленые.
-export const validateFieldN9 = ({ star, square, triangle, circle }) =>
-    [star, square, triangle, circle].every(equals("green"));
+export const validateFieldN9 = pipe(values, all(equals("green")));
 
 // 10. Треугольник и квадрат одного цвета (не белого), остальные – любого цвета
 export const validateFieldN10 = allPass([
     ({ triangle, square }) => triangle === square,
-    ({ triangle }) => triangle !== "white",
+    complement(propEq("triangle", "white")),
 ]);
